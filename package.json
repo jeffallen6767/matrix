@@ -1,16 +1,19 @@
 {
   "name": "matrix",
   "version": "0.1.0",
-  "author": "jeff allen",
-  "dependencies": {
-    "react": "^16.2.0",
-    "react-dom": "^16.2.0",
-    "react-scripts": "1.0.17"
-  },
+  "author": "Jeffrey D. Allen",
+  "license": "none",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "start": "cross-env LOG_LEVEL=debug node index",
+    "test": "cross-env LOG_LEVEL=debug node test"
+  },
+  "webconfig": {
+    "port": 3333,
+    "publicFolder": "public",
+    "indexFile": "index.html"
+  },
+  "dependencies": {
+    "cross-env": "^3.1.4",
+    "express": "^4.14.0"
   }
 }
