@@ -2,7 +2,8 @@
 var
   Application = (function() {
     var 
-      CHAR_SPACE = 160,//32
+      CHAR_CODE_SPACE = 160,
+      CHAR_SPACE = String.fromCharCode(CHAR_CODE_SPACE),
       inst = {
         "state": {
           dom: {},
@@ -25,62 +26,47 @@ var
               inst.configure[key](conf[key]);
             });
           }
-          inst.setup();
           inst.state.dom.root.show();
-          inst.createDom();
+          inst.setup();
           inst.runApp();
         },
         "setup": function() {
           var 
             app = inst.state.app,
-            types = [];
+            cols = app.cols,
+            rows = app.rows,
+            types = [CHAR_SPACE],
+            lines = [],
+            w,x,y,z;
           app.chars.forEach(function(charSet) {
             var
               idx = charSet[0],
               max = charSet[1];
             while (idx <= max) {
-              types.push(idx++);
+              types.push(
+                String.fromCharCode(idx++)
+              );
             }
           });
           app.charTypes = types;
           app.charCount = types.length;
-          app.animationState = {
-            "lines": []
-          };
-        },
-        "getRandomCharCode": function() {
-          return inst.state.app.charTypes[
-            Math.floor(Math.random() * inst.state.app.charCount)
-          ];
-        },
-        "createDom": function() {
-          var
-            content = [],
-            app = inst.state.app,
-            cols = app.cols,
-            rows = app.rows,
-            charVal,
-            character,
-            cx,
-            w,x,y,z;
+          // lines
           for (x=0; x<cols; x++) {
-            cx = [{
-              "vis": 0
-            }];
-            z = $('<div class="column"></div>');
             w = [];
+            z = {
+              "vis": 0,
+              "data": w
+            };
             for (y=0; y<rows; y++) {
-              charVal = app.start ? inst.getRandomCharCode() : CHAR_SPACE;
-              cell = $('<div id="cell_' + x + '_' + y + '" class="cell">' + String.fromCharCode(charVal) + '</div>');
-              w.push(cell);
-              cx.push([false,cell]);
+              w.push(
+                app.start ? inst.getRandomChar() : CHAR_SPACE
+              );
             }
-            app.animationState.lines.push(cx);
-            content.push(
-              z.append(w)
-            );
+            lines.push(z);
           }
-          inst.state.dom.content.empty().append(content);
+          app.animationState = {
+            "lines": lines
+          };
         },
         "runApp": function() {
           var 
@@ -108,30 +94,29 @@ var
         "animate": function(now) {
           try {
             var 
-              maxFrame = inst.state.app.animation.stopFrame || 0,
-              state = inst.state.app.animationState,
-              fpsInterval = state.fpsInterval;
+              app = inst.state.app,
+              maxFrame = app.animation.stopFrame || 0,
+              state = app.animationState,
+              fpsInterval = state.fpsInterval,
+              // calc elapsed time since last loop
+              elapsed = now - state.lastDrawTime;
             
-            if (maxFrame && state.frameCount > maxFrame) {
-              console.log("debug and stop > " + maxFrame, state.frameCount);
+            // are we requested to stop after N frames? ( debugging )
+            if (state.stop || (maxFrame && (state.frameCount > maxFrame))) {
+              console.log("animate stop @ " + state.frameCount + ", msg: " + state.stop);
             } else {
               // request another frame
               state.requestID = requestAnimationFrame(inst.animate);
-            }
-
-            // calc elapsed time since last loop
-            var elapsed = now - state.lastDrawTime;
-
-            // if enough time has elapsed, draw the next frame
-            if (elapsed > fpsInterval) {
-              // Get ready for next frame by setting lastDrawTime=now, but...
-              // Also, adjust for fpsInterval not being multiple of 16.67
-              state.lastDrawTime = now - (elapsed % fpsInterval);
-
-              // draw
-              inst.drawNextFrame(now);
-
-              state.frameCount++;
+              // if enough time has elapsed, draw the next frame
+              if (elapsed > fpsInterval) {
+                // Get ready for next frame by setting lastDrawTime=now, but...
+                // Also, adjust for fpsInterval not being multiple of 16.67
+                state.lastDrawTime = now;// - (elapsed % fpsInterval);
+                // draw
+                inst.drawNextFrame(now);
+                // inc frame counter
+                state.frameCount++;
+              }
             }
           } catch (e) {
             if (state.requestID) {
@@ -145,99 +130,104 @@ var
           var 
             len = max - min,
             result = Math.floor(
-              Math.random() * len + min
+              (Math.random() * len) + min
             );
-          console.log("randomFromRange", min, max, result);
           return result;
         },
         "randomChoice": function(set) {
-          var num = set.length;
           return set[
-            inst.randomFromRange(0, num)
+            inst.randomFromRange(0, set.length)
           ];
         },
+        "getRandomChar": function() {
+          return inst.randomChoice(inst.state.app.charTypes);
+        },
         "drawNextFrame": function(now) {
-          
+          inst.nextState(now);
+          inst.showState(now);
+        },
+        "nextState": function(now) {
           var 
             app = inst.state.app,
             rows = app.rows,
             animation = app.animation,
-            minLine = animation.minLineLength,
-            lines = app.animationState.lines,
+            state = app.animationState,
+            lines = state.lines,
             max = lines.length,
-            line, lineState,
-            r,s,t,
-            u,v,w,
-            x,y,z;
+            line,
+            x;
           for (x=0; x<max; x++) {
-            if (x==0) {
-              console.log("drawNextFrame", now);
-            }
             line = lines[x];
-            lineState = line[0];
-            switch (lineState.vis) {
-              case 0:
-                // should create new line?
-                if (Math.random() <= animation.fillRate) {
-                  lineState.last = now;
-                  lineState.speed = inst.randomChoice(animation.lineSpeeds);
-                  lineState.rate = (1000 * lineState.speed / rows);
-                  lineState.next = now + lineState.rate;
-                  lineState.length = inst.randomFromRange(minLine, rows);
-                  lineState.head = 0;
-                  lineState.headMove = true;
-                  lineState.lastHead = 0;
-                  lineState.tail = lineState.head - lineState.length;
-                  lineState.lastTail = lineState.tail;
-                  lineState.vis = 1;
-                  
-                }
-                break;
-            }
-            if (lineState.vis) {
-              if (x==0) {
-                console.log(x, lineState);
+            if (line.vis === 0) {
+              // line not visible...
+              // should create new line?
+              if (Math.random() <= animation.fillRate) {
+                line.vis = 1;
+                line.start = now;
+                line.rate = (1000 * inst.randomChoice(animation.lineSpeeds) / rows);
+                line.next = now + line.rate;
+                line.length = inst.randomFromRange(animation.minLineLength, animation.maxLineLength);
+                line.head = 0;
+                line.tail = line.head - line.length;
+                line.data[0] = inst.getRandomChar();
               }
-              u = lineState.tail - 1;
-              v = lineState.head;
-              for (y=v; y>u; y--) {
-                if (y < 0) {
-                  break;
+            } else {
+              // visible
+              while (line.vis && (now >= line.next)) {
+                line.head++;
+                if (line.head < rows) {
+                  line.data[line.head] = inst.getRandomChar();
                 }
-                r = y + 1;
-                if (y == v) {
-                  // head
-                  if (lineState.headMove || (Math.random() <= animation.headChange)) {
-                    w = inst.getRandomCharCode();
-                    s = line[r];
-                    s[0] = w;
-                    t = s[1];
-                    t.empty().text(
-                      String.fromCharCode(w)
-                    );
-                    if (lineState.headMove) {
-                      t.addClass('blue');
-                      lineState.headMove = false;
-                    }
-                    if (lineState.head > lineState.lastHead) {
-                      s = line[y];
-                      t = s[1];
-                      t.removeClass('blue');
-                      lineState.lastHead = lineState.head;
-                    }
+                line.tail++;
+                //console.log("++line.head", line.head, "++line.tail", line.tail);
+                if (line.tail > -1) {
+                  if (line.tail < rows) {
+                    line.data[line.tail] = CHAR_SPACE;
+                  } else {
+                    // line finished...
+                    line.vis = 0;
+                    //state.stop = "line finished: " + JSON.stringify(line);
                   }
                 }
-              }
-              if (now >= lineState.next) {
-                lineState.head++;
-                lineState.tail++;
-                lineState.last = lineState.next;
-                lineState.next += lineState.rate;
-                lineState.headMove = true;
+                line.next += line.rate;
               }
             }
           }
-        }
+        },
+        "showState": function(now) {
+          var
+            content = [],
+            app = inst.state.app,
+            cols = app.cols,
+            rows = app.rows,
+            state = app.animationState,
+            lines = state.lines,
+            line, data, head, tail, css,
+            x,y;
+          for (x=0; x<cols; x++) {
+            line = lines[x];
+            data = line.data;
+            head = line.head;
+            tail = line.tail;
+            //console.log("draw: " + JSON.stringify(data));
+            content.push('<div class="column">');
+            for (y=0; y<rows; y++) {
+              css = ['cell'];
+              if (y === head) {
+                css.push('blue');
+              } else if (y > tail) {
+                css.push('green');
+              }
+              content.push(
+                '<div class="', css.join(' '), '">', data[y], '</div>'
+              );
+            }
+            content.push('</div>');
+          }
+          inst.state.dom.content.html(content.join(''));
+          //$(content).replaceAll();
+          //.empty().append(content);
+        },
       };
     return inst;
   })();

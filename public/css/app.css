@@ -43,7 +43,7 @@ div#content {
   width: 1vw;
   padding:0px;
   margin:0px;
-  color: #007700;
+  color: #101010;
 }
 
 .bold {
@@ -52,4 +52,8 @@ div#content {
 
 .blue {
   color: #ccccff;
+}
+
+.green {
+  color: #007700;
 }
