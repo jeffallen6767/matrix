@@ -37,7 +37,7 @@ var
             rows = app.rows,
             types = [CHAR_SPACE],
             lines = [],
-            w,x,y,z;
+            v,w,x,y,z;
           app.chars.forEach(function(charSet) {
             var
               idx = charSet[0],
@@ -53,14 +53,17 @@ var
           // lines
           for (x=0; x<cols; x++) {
             w = [];
+            v = [];
             z = {
               "vis": 0,
-              "data": w
+              "data": w,
+              "extra": v
             };
             for (y=0; y<rows; y++) {
               w.push(
                 app.start ? inst.getRandomChar() : CHAR_SPACE
               );
+              v.push(0);
             }
             lines.push(z);
           }
@@ -72,8 +75,8 @@ var
           var 
             dom = inst.state.dom,
             animation = inst.state.app.animation;
-          console.log("Application");
-          console.log(inst);
+          //console.log("Application");
+          //console.log(inst);
           dom.loading.hide();
           dom.content.show();
           inst.startAnimating(animation.fps, animation.sample);
@@ -146,6 +149,17 @@ var
           inst.nextState(now);
           inst.showState(now);
         },
+        "changeColor": function(line, index) {
+          var 
+            idx = typeof index === "number" ? index : line.head;
+          line.extra[idx] = inst.randomFromRange(0, 15);
+        },
+        "changeLine": function(line, index) {
+          var 
+            idx = typeof index === "number" ? index : line.head;
+          line.data[idx] = inst.getRandomChar();
+          line.extra[idx] = inst.randomFromRange(0, 15);
+        },
         "nextState": function(now) {
           var 
             app = inst.state.app,
@@ -155,7 +169,7 @@ var
             lines = state.lines,
             max = lines.length,
             line,
-            x;
+            x,y,z;
           for (x=0; x<max; x++) {
             line = lines[x];
             if (line.vis === 0) {
@@ -169,27 +183,48 @@ var
                 line.length = inst.randomFromRange(animation.minLineLength, animation.maxLineLength);
                 line.head = 0;
                 line.tail = line.head - line.length;
-                line.data[0] = inst.getRandomChar();
+                inst.changeLine(line);
               }
             } else {
               // visible
-              while (line.vis && (now >= line.next)) {
-                line.head++;
-                if (line.head < rows) {
-                  line.data[line.head] = inst.getRandomChar();
-                }
-                line.tail++;
-                //console.log("++line.head", line.head, "++line.tail", line.tail);
-                if (line.tail > -1) {
-                  if (line.tail < rows) {
-                    line.data[line.tail] = CHAR_SPACE;
+              if (now < line.next) {
+                // not moving yet...do something
+                if (Math.random() < animation.headChange) {
+                  // change the head:
+                  inst.changeLine(line);
+                } else {
+                  // choose random spot in visible line
+                  y = inst.randomFromRange(
+                    Math.max(0, line.tail), Math.min(line.head, rows)
+                  );
+                  if (Math.random() < animation.colorChange) {
+                    // just change the color:
+                    inst.changeColor(line, y);
                   } else {
-                    // line finished...
-                    line.vis = 0;
-                    //state.stop = "line finished: " + JSON.stringify(line);
+                    // do something random to this spot:
+                    inst.changeLine(line, y);
                   }
                 }
-                line.next += line.rate;
+              } else {
+                // moving...
+                while (line.vis && (now >= line.next)) {
+                  line.head++;
+                  if (line.head < rows) {
+                    inst.changeLine(line);
+                  }
+                  line.tail++;
+                  //console.log("++line.head", line.head, "++line.tail", line.tail);
+                  if (line.tail > -1) {
+                    if (line.tail <= rows) {
+                      line.data[line.tail] = CHAR_SPACE;
+                    } else {
+                      // line finished...
+                      line.vis = 0;
+                      //state.stop = "line finished: " + JSON.stringify(line);
+                    }
+                  }
+                  line.next += line.rate;
+                }
               }
             }
           }
@@ -202,31 +237,26 @@ var
             rows = app.rows,
             state = app.animationState,
             lines = state.lines,
-            line, data, head, tail, css,
+            line,
+            css,
             x,y;
           for (x=0; x<cols; x++) {
             line = lines[x];
-            data = line.data;
-            head = line.head;
-            tail = line.tail;
-            //console.log("draw: " + JSON.stringify(data));
             content.push('<div class="column">');
             for (y=0; y<rows; y++) {
               css = ['cell'];
-              if (y === head) {
+              if (y === line.head) {
                 css.push('blue');
-              } else if (y > tail) {
-                css.push('green');
+              } else if (y > line.tail && y < line.head) {
+                css.push('green_' + line.extra[y]);
               }
               content.push(
-                '<div class="', css.join(' '), '">', data[y], '</div>'
+                '<div class="', css.join(' '), '">', line.data[y], '</div>'
               );
             }
             content.push('</div>');
           }
           inst.state.dom.content.html(content.join(''));
-          //$(content).replaceAll();
-          //.empty().append(content);
         },
       };
     return inst;

@@ -28,6 +28,7 @@ body {
 div#content {
   padding: 5px;
   vertical-align: top;
+  cursor: default;
 }
 
 .column {
@@ -54,6 +55,48 @@ div#content {
   color: #ccccff;
 }
 
-.green {
+.green_0 {
+  color: #001100;
+}
+.green_1 {
+  color: #002200;
+}
+.green_2 {
+  color: #003300;
+}
+.green_3 {
+  color: #004400;
+}
+.green_4 {
+  color: #005500;
+}
+.green_5 {
+  color: #006600;
+}
+.green_6 {
   color: #007700;
+}
+.green_7 {
+  color: #008800;
+}
+.green_8 {
+  color: #009900;
+}
+.green_9 {
+  color: #00aa00;
+}
+.green_10 {
+  color: #00bb00;
+}
+.green_11 {
+  color: #00cc00;
+}
+.green_12 {
+  color: #00dd00;
+}
+.green_13 {
+  color: #00ee00;
+}
+.green_14 {
+  color: #00ff00;
 }
