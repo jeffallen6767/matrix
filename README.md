@@ -1,6 +1,9 @@
 # matrix
 the matrix
 
+## Demo
+
+[Matrix Demo](https://jeffallen6767.github.io/matrix/public/)
 
 ## Getting the Code
 
