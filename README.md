@@ -1,5 +1,6 @@
 # matrix
-the matrix
+
+![Matrix Example](https://jeffallen6767.github.io/matrix/public/matrix.png)
 
 ## Demo
 
