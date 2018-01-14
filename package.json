@@ -4,8 +4,7 @@
   "author": "Jeffrey D. Allen",
   "license": "none",
   "scripts": {
-    "start": "cross-env LOG_LEVEL=debug node index",
-    "test": "cross-env LOG_LEVEL=debug node test"
+    "start": "cross-env LOG_LEVEL=debug node index"
   },
   "webconfig": {
     "port": 3333,
