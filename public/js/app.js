@@ -29,9 +29,11 @@ var
               inst.configure[key](conf[key]);
             });
           }
-          //console.log("Application", Application);
+          // show the root node
           inst.state.dom.root.classList.remove("hidden");
+          // pre-calc as much as possible
           inst.setup();
+          // start it up
           inst.runApp();
         },
         "setup": function() {
@@ -42,6 +44,7 @@ var
             types = [CHAR_SPACE],
             lines = [],
             v,w,x,y,z;
+          // create all the characters once
           app.chars.forEach(function(charSet) {
             var
               idx = charSet[0],
@@ -54,7 +57,7 @@ var
           });
           app.charTypes = types;
           app.charCount = types.length;
-          // lines
+          // create all the line data once
           for (x=0; x<cols; x++) {
             w = [];
             v = [];
@@ -71,6 +74,7 @@ var
             }
             lines.push(z);
           }
+          // state of animation
           app.animationState = {
             "lines": lines
           };
@@ -79,25 +83,24 @@ var
           var 
             dom = inst.state.dom,
             animation = inst.state.app.animation;
-          //console.log("Application");
-          //console.log(inst);
+          // hide loading msg
           dom.loading.classList.add("hidden");
+          // show content
           dom.content.classList.remove("hidden");
           inst.startAnimating(animation.fps, animation.sample);
         },
         "startAnimating": function(fps, sampleFreq) {
           var 
             state = inst.state.app.animationState;
-          
+          // init animation state
           state.fpsInterval = 1000 / fps;
           state.lastDrawTime = performance.now();
           state.lastSampleTime = state.lastDrawTime;
           state.frameCount = 0;
-
+          // start animating
           inst.animate(state.lastDrawTime);
-
-          //state.intervalID = setInterval(sampleFps, sampleFreq);
         },
+        // use requestAnimationFrame to limit state calc/repaints to frame-rate
         "animate": function(now) {
           try {
             var 
@@ -107,7 +110,6 @@ var
               fpsInterval = state.fpsInterval,
               // calc elapsed time since last loop
               elapsed = now - state.lastDrawTime;
-            
             // are we requested to stop after N frames? ( debugging )
             if (state.stop || (maxFrame && (state.frameCount > maxFrame))) {
               console.log("animate stop @ " + state.frameCount + ", msg: " + state.stop);
@@ -116,9 +118,8 @@ var
               state.requestID = requestAnimationFrame(inst.animate);
               // if enough time has elapsed, draw the next frame
               if (elapsed > fpsInterval) {
-                // Get ready for next frame by setting lastDrawTime=now, but...
-                // Also, adjust for fpsInterval not being multiple of 16.67
-                state.lastDrawTime = now;// - (elapsed % fpsInterval);
+                // Get ready for next frame by setting lastDrawTime=now
+                state.lastDrawTime = now;
                 // draw
                 inst.drawNextFrame(now);
                 // inc frame counter
@@ -133,37 +134,12 @@ var
             console.error(e);
           }
         },
-        "randomFromRange": function(min, max) {
-          var 
-            len = max - min,
-            result = Math.floor(
-              (Math.random() * len) + min
-            );
-          return result;
-        },
-        "randomChoice": function(set) {
-          return set[
-            inst.randomFromRange(0, set.length)
-          ];
-        },
-        "getRandomChar": function() {
-          return inst.randomChoice(inst.state.app.charTypes);
-        },
+        // once per frame, calc and show the next state
         "drawNextFrame": function(now) {
           inst.nextState(now);
           inst.showState(now);
         },
-        "changeColor": function(line, index) {
-          var 
-            idx = typeof index === "number" ? index : line.head;
-          line.extra[idx] = inst.randomFromRange(0, 15);
-        },
-        "changeLine": function(line, index) {
-          var 
-            idx = typeof index === "number" ? index : line.head;
-          line.data[idx] = inst.getRandomChar();
-          line.extra[idx] = inst.randomFromRange(0, 15);
-        },
+        // calc the next state
         "nextState": function(now) {
           var 
             app = inst.state.app,
@@ -233,6 +209,7 @@ var
             }
           }
         },
+        // show the previously calculated state
         "showState": function(now) {
           var
             content = [],
@@ -244,6 +221,7 @@ var
             line,
             css,
             x,y;
+          // update everything in memory
           for (x=0; x<cols; x++) {
             line = lines[x];
             content.push('<div class="column">');
@@ -260,8 +238,44 @@ var
             }
             content.push('</div>');
           }
+          // repaint once...
           inst.state.dom.content.innerHTML = content.join('');
         },
+        // random int from min to max ( inclusive )
+        "randomFromRange": function(min, max) {
+          if (min === max) return min;
+          var 
+            len = max - min,
+            result = Math.floor(
+              (Math.random() * len) + min
+            );
+          return result;
+        },
+        // random item from set
+        "randomChoice": function(set) {
+          return set[
+            inst.randomFromRange(0, set.length)
+          ];
+        },
+        // random character from set of allowed chars
+        "getRandomChar": function() {
+          return inst.randomChoice(inst.state.app.charTypes);
+        },
+        // change the cell color @ index ( or head )
+        // to a random intensity
+        "changeColor": function(line, index) {
+          var 
+            idx = typeof index === "number" ? index : line.head;
+          line.extra[idx] = inst.randomFromRange(0, 15);
+        },
+        // change the cell text and color @ index ( or head )
+        // to a random character and intensity
+        "changeLine": function(line, index) {
+          var 
+            idx = typeof index === "number" ? index : line.head;
+          line.data[idx] = inst.getRandomChar();
+          line.extra[idx] = inst.randomFromRange(0, 15);
+        }
       };
     return inst;
   })();
