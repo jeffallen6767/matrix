@@ -11,9 +11,12 @@ var
         },
         "configure": {
           "dom": function(obj) {
-            var dom = inst.state.dom;
-            Object.keys(obj).forEach(function(key){
-              dom[key] = $(obj[key]);
+            var 
+              dom = inst.state.dom;
+            Object.keys(obj).forEach(function(key) {
+              dom[key] = document.getElementById(
+                obj[key].replace('#', '')
+              );
             });
           },
           "app": function(obj) {
@@ -26,7 +29,8 @@ var
               inst.configure[key](conf[key]);
             });
           }
-          inst.state.dom.root.show();
+          //console.log("Application", Application);
+          inst.state.dom.root.classList.remove("hidden");
           inst.setup();
           inst.runApp();
         },
@@ -77,8 +81,8 @@ var
             animation = inst.state.app.animation;
           //console.log("Application");
           //console.log(inst);
-          dom.loading.hide();
-          dom.content.show();
+          dom.loading.classList.add("hidden");
+          dom.content.classList.remove("hidden");
           inst.startAnimating(animation.fps, animation.sample);
         },
         "startAnimating": function(fps, sampleFreq) {
@@ -256,7 +260,7 @@ var
             }
             content.push('</div>');
           }
-          inst.state.dom.content.html(content.join(''));
+          inst.state.dom.content.innerHTML = content.join('');
         },
       };
     return inst;
