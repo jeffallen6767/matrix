@@ -7,7 +7,8 @@ var
       inst = {
         "state": {
           dom: {},
-          app: {}
+          app: {},
+          msg: {}
         },
         "configure": {
           "dom": function(obj) {
@@ -29,12 +30,45 @@ var
               inst.configure[key](conf[key]);
             });
           }
+          inst.setMessage();
           // show the root node
           inst.state.dom.root.classList.remove("hidden");
           // pre-calc as much as possible
           inst.setup();
           // start it up
           inst.runApp();
+        },
+        "setMessage": function() {
+          console.log(window.location.search);
+          // ?message=I%20need%20some%20coffee\nBe%20back%20in%20a%20few...
+          var 
+            search = (window.location.search || ' ').slice(1),
+            params = search.split("&").map(function(line) {
+              return line.split("=");
+            }).reduce(function(acc, pair) {
+              var 
+                key = pair[0],
+                val = pair[1];
+              acc[key] = val;
+              return acc;
+            }, {}),
+            message = params.message || '',
+            html = inst.getHtml(message);
+          console.log("message", message);
+          console.log("html", html);
+          if (html !== '') {
+            inst.state.msg.raw = message;
+            inst.state.msg.html = html;
+            
+            inst.state.dom.message.innerHTML = html;
+            inst.state.dom.message.classList.remove("hidden");
+          }
+        },
+        "getHtml": function(msg) {
+          var 
+            html = msg.replace(/\\n/g, "<br>")
+                      .replace(/%20/g, " ");
+          return html;
         },
         "setup": function() {
           var 

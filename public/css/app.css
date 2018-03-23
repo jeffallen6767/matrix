@@ -100,3 +100,28 @@ div#content {
 .green_14 {
   color: #00ff00;
 }
+
+div#centerpoint {
+  top: 50%;
+  left: 50%;
+  position: absolute;
+}
+
+div#message {
+  position: relative;
+
+  width: 1000px;
+  margin-left: -500px;
+
+  height: 600px;
+  margin-top: -300px;
+  
+  color: #85e221;
+  font-size: 110px;
+  
+  text-shadow:
+		-1px -1px 10px #000,
+		1px -1px 10px #000,
+		-1px 1px 10px #000,
+		1px 1px 10px #000;
+}
